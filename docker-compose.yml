@@ -1,0 +1,32 @@
+services:
+  agent-zero:
+    container_name: agent-zero-dev
+    image: frdel/agent-zero-run:development
+    volumes:
+      # Mount the current project directory to /a0 in the container
+      - .:/a0
+      # Mount work directory for persistent storage
+      - ./work_dir:/root
+    ports:
+      # Map container port 80 to host port 55080 (configurable via environment)
+      - "${AGENT_ZERO_HTTP_PORT:-55080}:80"
+      # Map container port 22 to host port 55022 for SSH access
+      - "${AGENT_ZERO_SSH_PORT:-55022}:22"
+    environment:
+      # Set environment variables for the container
+      - BRANCH=development
+    restart: unless-stopped
+    # Ensure Docker daemon is available
+    depends_on: []
+    # Add health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+# Optional: Add a network for better isolation
+networks:
+  default:
+    name: agent-zero-network
